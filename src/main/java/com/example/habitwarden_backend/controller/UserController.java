@@ -37,8 +37,7 @@ public class UserController {
                 return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
             }
 
-            User myUser = new User(null, u.getName(), null);
-            return Mono.just(myUser);
+            return userService.getUserByName(u.getName());
         });
     }
 

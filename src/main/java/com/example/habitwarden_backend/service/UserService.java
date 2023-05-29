@@ -31,6 +31,12 @@ public class UserService {
     }
 
     public Mono<User> getUserByName(String name) {
+        // breaks login
+//        return userRepository.findByName(name).flatMap(u -> {
+//            u.setPassword(null);
+//            System.out.println(u);
+//            return Mono.just(u);
+//        });
         return userRepository.findByName(name);
     }
 

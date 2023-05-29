@@ -6,12 +6,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class HabitDoneData {
+public class UserHabitData {
 
-    String habitName;
-    List<Boolean> lieOnDone;
+    String userName;
+    List<HabitDoneData> habitDoneData;
 
 }
