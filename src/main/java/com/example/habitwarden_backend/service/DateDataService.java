@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -35,20 +34,35 @@ public class DateDataService {
         return dateDataRepository.findByDate(date);
     }
 
-    public Mono<DateData> saveDateData(@RequestBody DateDataRequest dateData) {
+    public Mono<HabitDoneData> getHabitDoneData(String userName, String habitName, LocalDate date) {
+        return getDateData(date)
+                .flatMap(dateDataDocument -> Flux.fromIterable(dateDataDocument.getUserHabitData())
+                        .filter(userHabitData -> userHabitData.getUserName().equals(userName))
+                        .next()
+                )
+                .flatMap(userHabitData -> Flux.fromIterable(userHabitData.getHabitDoneData())
+                        .filter(habitDoneData -> habitDoneData.getHabitName().equals(habitName))
+                        .next()
+                );
+    }
+
+    public Mono<DateData> saveDateData(DateDataRequest dateData) {
         return dateDataRepository.save(DateData.ofRequest(dateData));
     }
 
     public Mono<DateData> addUserHabitData(DateDataRequest dateData) {
-        DateData myDateData = DateData.ofRequest(dateData);
-        return reactiveMongoTemplate.updateFirst(
-                        Query.query(Criteria.where("_id").is(myDateData.getId())),
-                        new Update().push("userHabitData", myDateData.getUserHabitData().get(0)),
-                        DateData.class
-                )
-                .then(Mono.just(myDateData));
+        HabitDoneData newHabitDoneData = new HabitDoneData(dateData.getHabitName(), List.of(dateData.getLieOnDone()));
+        UserHabitData newUserHabitData = new UserHabitData(dateData.getUserName(), List.of(newHabitDoneData));
+
+        Query query = Query.query(Criteria.where("date").is(LocalDate.parse(dateData.getDate())));
+        return reactiveMongoTemplate.findOne(query, DateData.class)
+                .flatMap(myDateData -> {
+                    myDateData.getUserHabitData().add(newUserHabitData);
+                    return reactiveMongoTemplate.save(myDateData);
+                });
     }
 
+    // TODO figure out if this can be made better/shorter
     public Mono<DateData> addHabitDoneData(DateDataRequest dateData) {
         String userName = dateData.getUserName();
         String habitName = dateData.getHabitName();
@@ -57,8 +71,7 @@ public class DateDataService {
         // Create a new HabitDoneData object with the provided habitId and lieOnDone
         HabitDoneData newHabitDoneData = new HabitDoneData(habitName, List.of(lieOnDone));
 
-        // Find the DateData document with the given userId
-        Query query = Query.query(Criteria.where("userHabitData.userName").is(userName));
+        Query query = Query.query(Criteria.where("date").is(LocalDate.parse(dateData.getDate())));
         return reactiveMongoTemplate.findOne(query, DateData.class)
                 .flatMap(dateDataDocument -> {
                     // Update the existing UserHabitData with the new HabitDoneData
@@ -80,7 +93,6 @@ public class DateDataService {
                 });
     }
 
-    // TODO here to not forget: change user from hardcoded to whoami or something in frontend
     public Mono<DateData> addLieOnDone(DateDataRequest dateData) {
         String userName = dateData.getUserName();
         String habitName = dateData.getHabitName();
