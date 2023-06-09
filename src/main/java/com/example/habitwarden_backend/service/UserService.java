@@ -38,4 +38,8 @@ public class UserService {
         return userRepository.existsByName(name);
     }
 
+    public Mono<User> save(User user) {
+        return userRepository.save(user);
+    }
+
 }

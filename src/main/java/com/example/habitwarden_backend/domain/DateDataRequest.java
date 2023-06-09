@@ -8,6 +8,7 @@ public class DateDataRequest {
     String userName;
     String habitName;
     String date;
+    Boolean done;
     Boolean lieOnDone;
 
 }

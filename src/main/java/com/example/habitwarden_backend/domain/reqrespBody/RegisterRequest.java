@@ -11,4 +11,5 @@ public class RegisterRequest {
     private String age;
     private String gender;
     private String profession;
+    private Boolean isDarkGroup;
 }

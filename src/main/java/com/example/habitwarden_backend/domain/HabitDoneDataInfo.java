@@ -4,14 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class HabitDoneData {
+public class HabitDoneDataInfo {
 
-    String habitName;
-    List<HabitDoneDataInfo> habitDoneDataInfo;
+    LocalDateTime doneTime;
+    Boolean done;
+    Boolean lieOnDone;
 
 }

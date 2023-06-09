@@ -38,7 +38,7 @@ public class User implements UserDetails {
     }
 
     public static User ofRegisterRequest(RegisterRequest registeredUser) {
-        Gender gender = switch (registeredUser.getGender()) {
+        Gender gender = switch (registeredUser.getGender().toUpperCase()) {
             case "M" -> Gender.M;
             case "W" -> Gender.W;
             default -> Gender.D;
@@ -52,7 +52,7 @@ public class User implements UserDetails {
                 gender,
                 Collections.singletonList(Role.USER),
                 registeredUser.getProfession(),
-                true,
+                registeredUser.getIsDarkGroup(),
                 0
         );
     }

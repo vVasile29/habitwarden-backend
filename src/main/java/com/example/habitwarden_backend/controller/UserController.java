@@ -7,9 +7,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,4 +43,25 @@ public class UserController {
     public Flux<User> getAllUsers() {
         return userService.getAllUsers();
     }
+
+    @PostMapping("/savePoints/{points}")
+    public Mono<User> savePoints(@PathVariable Integer points, ServerHttpRequest request) {
+        Mono<User> currentUser = getCurrentUser(request);
+        return currentUser.flatMap(u -> {
+            int currentPoints = u.getPoints();
+            u.setPoints(currentPoints + points);
+            return userService.save(u);
+        });
+    }
+
+    @PostMapping("/removePoints/{points}")
+    public Mono<User> removePoints(@PathVariable Integer points, ServerHttpRequest request) {
+        Mono<User> currentUser = getCurrentUser(request);
+        return currentUser.flatMap(u -> {
+            int currentPoints = u.getPoints();
+            u.setPoints(currentPoints - points);
+            return userService.save(u);
+        });
+    }
+
 }

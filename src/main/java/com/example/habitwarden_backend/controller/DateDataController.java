@@ -18,25 +18,29 @@ public class DateDataController {
 
     private final DateDataService dateDataService;
     private final HabitService habitService;
+    private final UserController userController;
 
     @GetMapping("/getAllDateData")
     public Flux<DateData> getAllDateData() {
         return dateDataService.getAllDateData();
     }
 
-    @PostMapping("/getHabitDoneData")
-    public Mono<HabitDoneData> getHabitDoneData(@RequestBody HabitDoneDataRequest habitDoneData) {
-        return dateDataService.getHabitDoneData(habitDoneData.getUserName(),
+    @PostMapping("/getCurrentHabitDoneDataOfUser")
+    public Mono<HabitDoneData> getCurrentHabitDoneDataOfUser(@RequestBody HabitDoneDataRequest habitDoneData) {
+        return dateDataService.getCurrentHabitDoneDataOfUser(habitDoneData.getUserName(),
                 habitDoneData.getHabitName(), LocalDate.parse(habitDoneData.getDate()));
+    }
+
+    @PostMapping("/getLastHabitDoneDataOfUser")
+    public Mono<HabitDoneData> getHabitDoneData(@RequestBody HabitDoneDataRequest habitDoneData) {
+        return dateDataService.getLastHabitDoneDataOfUser(habitDoneData.getUserName(), habitDoneData.getHabitName());
     }
 
     @PostMapping("/saveDateData")
     public Mono<DateData> saveDateData(@RequestBody DateDataRequest dateData) {
-        // TODO parsing doesnt work after new day in german time and UTC still in other day
         return dateDataService.getDateData(LocalDate.parse(dateData.getDate())).flatMap(data -> {
             List<UserHabitData> userHabitDataList = data.getUserHabitData().stream().toList();
             if (userHabitDataList.stream().noneMatch(userHabitData -> userHabitData.getUserName().equals(dateData.getUserName()))) {
-                System.out.println("no dateData for this user found, adding user and data");
                 return dateDataService.addUserHabitData(dateData);
             }
 
@@ -44,7 +48,6 @@ public class DateDataController {
                     .filter(userHabitData -> userHabitData.getUserName().equals(dateData.getUserName()))
                     .flatMap(userHabitData -> userHabitData.getHabitDoneData().stream()).toList();
             if (habitDoneDataList.stream().noneMatch(habitDoneData -> habitDoneData.getHabitName().equals(dateData.getHabitName()))) {
-                System.out.println("habit not yet found on this dateData, has been added with data");
                 return dateDataService.addHabitDoneData(dateData);
             }
 
@@ -61,15 +64,20 @@ public class DateDataController {
     private Mono<Integer> calculateStreak(String userName, String habitName, LocalDate date, int streak) {
         Mono<Habit> habitMono = habitService.getHabitByName(habitName);
 
-        return dateDataService.getHabitDoneData(userName, habitName, date.minusDays(streak + 1))
+        return dateDataService.getCurrentHabitDoneDataOfUser(userName, habitName, date.minusDays(streak + 1))
                 .flatMap(data -> habitMono.flatMap(habit -> {
-                    if (data.getLieOnDone().size() == habit.getTimesPerDay()) {
+                    if (data.getHabitDoneDataInfo().size() == habit.getTimesPerDay()) {
                         return calculateStreak(userName, habitName, date, streak + 1);
                     } else {
                         return Mono.just(streak);
                     }
                 }))
                 .defaultIfEmpty(streak);
+    }
+
+    @PostMapping("/calculatePointsToRemoveFromAbsence")
+    public Mono<Integer> removePointsFromAbsence(@RequestBody HabitDoneDataRequest habitDoneData) {
+        return dateDataService.calculatePointsToRemoveFromAbsence(habitDoneData);
     }
 
 }

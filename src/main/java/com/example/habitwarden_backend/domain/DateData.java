@@ -7,6 +7,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class DateData {
 
     public static DateData ofRequest(DateDataRequest dateDataRequest) {
         List<HabitDoneData> habitDoneDataList = new ArrayList<>();
-        habitDoneDataList.add(new HabitDoneData(dateDataRequest.getHabitName(), List.of(dateDataRequest.getLieOnDone())));
+        habitDoneDataList.add(new HabitDoneData(dateDataRequest.getHabitName(), List.of(new HabitDoneDataInfo(LocalDateTime.now(), dateDataRequest.getDone(), dateDataRequest.getLieOnDone()))));
 
         List<UserHabitData> userHabitDataList = new ArrayList<>();
         userHabitDataList.add(new UserHabitData(dateDataRequest.getUserName(), habitDoneDataList));
