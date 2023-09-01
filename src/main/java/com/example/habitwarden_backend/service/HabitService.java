@@ -21,4 +21,10 @@ public class HabitService {
         return habitRepository.findByName(name);
     }
 
+    public Mono<Integer> getHabitTasksToDoPerDay() {
+        return habitRepository.findAll()
+                .flatMap(habit -> Mono.just(habit.getTimesPerDay()))
+                .reduce(0, Integer::sum);
+    }
+
 }

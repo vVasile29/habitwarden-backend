@@ -33,6 +33,31 @@ public class DateDataService {
         return dateDataRepository.findByDate(date);
     }
 
+    public Flux<UserHabitDataWithDate> getAllUserHabitDataWithDate(String userName) {
+        return getAllDateData()
+                .flatMap(dateData -> Flux.fromIterable(dateData.getUserHabitData())
+                        .filter(userHabitData -> userHabitData.getUserName().equals(userName))
+                        .map(habitDoneData -> new UserHabitDataWithDate(dateData.getDate(), habitDoneData))
+                );
+    }
+
+    public Flux<UserHabitDataWithDate> getAllUserHabitDataWithDatePredicate(String userName, Boolean lookForCompleted) {
+        Mono<Integer> tasksToDoPerDay = habitService.getHabitTasksToDoPerDay();
+        return tasksToDoPerDay.flatMapMany(toDo ->
+                getAllDateData()
+                        .flatMap(dateData -> Flux.fromIterable(dateData.getUserHabitData())
+                                .filter(userHabitData -> userHabitData.getUserName().equals(userName))
+                                .filter(userHabitData -> {
+                                    int habitDoneDataInfoSizeSum = userHabitData.getHabitDoneData()
+                                            .stream()
+                                            .map(habitDoneData -> habitDoneData.getHabitDoneDataInfo().size())
+                                            .reduce(0, Integer::sum);
+                                    return (habitDoneDataInfoSizeSum == toDo) == lookForCompleted;
+                                })
+                                .map(habitDoneData -> new UserHabitDataWithDate(dateData.getDate(), habitDoneData)))
+        );
+    }
+
     public Mono<HabitDoneData> getCurrentHabitDoneDataOfUser(String userName, String habitName, LocalDate date) {
         return getDateData(date)
                 .flatMap(dateDataDocument -> Flux.fromIterable(dateDataDocument.getUserHabitData())
@@ -68,10 +93,10 @@ public class DateDataService {
     }
 
     public Mono<DateData> addUserHabitData(DateDataRequest dateData) {
-        HabitDoneData newHabitDoneData = new HabitDoneData(dateData.getHabitName(), List.of(new HabitDoneDataInfo(LocalDateTime.now(), dateData.getDone(), dateData.getLieOnDone())));
+        HabitDoneData newHabitDoneData = new HabitDoneData(dateData.getHabitName(), List.of(new HabitDoneDataInfo(LocalDateTime.now(), dateData.getDone(), dateData.getLieOnDone(), dateData.getWantedToQuit())));
         UserHabitData newUserHabitData = new UserHabitData(dateData.getUserName(), List.of(newHabitDoneData));
 
-        Query query = Query.query(Criteria.where("date").is(LocalDate.parse(dateData.getDate())));
+        Query query = Query.query(Criteria.where("date").is(LocalDate.now()));
         return reactiveMongoTemplate.findOne(query, DateData.class)
                 .flatMap(myDateData -> {
                     myDateData.getUserHabitData().add(newUserHabitData);
@@ -84,11 +109,12 @@ public class DateDataService {
         String habitName = dateData.getHabitName();
         Boolean done = dateData.getDone();
         Boolean lieOnDone = dateData.getLieOnDone();
+        Boolean wantedToQuit = dateData.getWantedToQuit();
 
         // Create a new HabitDoneData object with the provided habitId and lieOnDone
-        HabitDoneData newHabitDoneData = new HabitDoneData(habitName, List.of(new HabitDoneDataInfo(LocalDateTime.now(), done, lieOnDone)));
+        HabitDoneData newHabitDoneData = new HabitDoneData(habitName, List.of(new HabitDoneDataInfo(LocalDateTime.now(), done, lieOnDone, wantedToQuit)));
 
-        Query query = Query.query(Criteria.where("date").is(LocalDate.parse(dateData.getDate())));
+        Query query = Query.query(Criteria.where("date").is(LocalDate.now()));
         return reactiveMongoTemplate.findOne(query, DateData.class)
                 .flatMap(dateDataDocument -> {
                     // Update the existing UserHabitData with the new HabitDoneData
@@ -110,15 +136,15 @@ public class DateDataService {
                 });
     }
 
-    // TODO nochmal überdenken hinsichtlich nicht gemacht und abgebrochen, weil dann doppelt punkte verlieren
-    public Mono<DateData> addLieOnDone(DateDataRequest dateData) {
+    public Mono<DateData> addHabitDoneDataInfo(DateDataRequest dateData) {
         String userName = dateData.getUserName();
         String habitName = dateData.getHabitName();
         Boolean done = dateData.getDone();
         Boolean lieOnDone = dateData.getLieOnDone();
+        Boolean wantedToQuit = dateData.getWantedToQuit();
 
         // Find the DateData document with the given userName and habitName
-        Query query = Query.query(Criteria.where("date").is(LocalDate.parse(dateData.getDate())));
+        Query query = Query.query(Criteria.where("date").is(LocalDate.now()));
         return reactiveMongoTemplate.findOne(query, DateData.class)
                 .flatMap(dateDataDocument -> {
                     // Update the existing HabitDoneDataInfo with the new lieOnDone value
@@ -129,7 +155,7 @@ public class DateDataService {
                                             .map(habitDoneData -> {
                                                 if (habitDoneData.getHabitName().equals(habitName)) {
                                                     List<HabitDoneDataInfo> habitDoneDataInfoList = habitDoneData.getHabitDoneDataInfo();
-                                                    habitDoneDataInfoList.add(new HabitDoneDataInfo(LocalDateTime.now(), done, lieOnDone));
+                                                    habitDoneDataInfoList.add(new HabitDoneDataInfo(LocalDateTime.now(), done, lieOnDone, wantedToQuit));
                                                     return new HabitDoneData(habitName, habitDoneDataInfoList);
                                                 }
                                                 return habitDoneData;

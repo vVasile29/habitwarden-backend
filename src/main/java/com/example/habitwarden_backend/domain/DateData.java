@@ -23,14 +23,14 @@ public class DateData {
 
     public static DateData ofRequest(DateDataRequest dateDataRequest) {
         List<HabitDoneData> habitDoneDataList = new ArrayList<>();
-        habitDoneDataList.add(new HabitDoneData(dateDataRequest.getHabitName(), List.of(new HabitDoneDataInfo(LocalDateTime.now(), dateDataRequest.getDone(), dateDataRequest.getLieOnDone()))));
+        habitDoneDataList.add(new HabitDoneData(dateDataRequest.getHabitName(), List.of(new HabitDoneDataInfo(LocalDateTime.now(), dateDataRequest.getDone(), dateDataRequest.getLieOnDone(), dateDataRequest.getWantedToQuit()))));
 
         List<UserHabitData> userHabitDataList = new ArrayList<>();
         userHabitDataList.add(new UserHabitData(dateDataRequest.getUserName(), habitDoneDataList));
 
         return new DateData(
                 null,
-                LocalDate.parse(dateDataRequest.getDate()),
+                LocalDate.now(),
                 userHabitDataList
         );
     }

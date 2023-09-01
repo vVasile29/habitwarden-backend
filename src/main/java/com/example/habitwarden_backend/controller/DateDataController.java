@@ -18,17 +18,31 @@ public class DateDataController {
 
     private final DateDataService dateDataService;
     private final HabitService habitService;
-    private final UserController userController;
 
     @GetMapping("/getAllDateData")
     public Flux<DateData> getAllDateData() {
         return dateDataService.getAllDateData();
     }
 
+    @GetMapping("/getAllUserHabitDataWithDate/{userName}")
+    public Flux<UserHabitDataWithDate> getAllUserHabitDataWithDate(@PathVariable String userName) {
+        return dateDataService.getAllUserHabitDataWithDate(userName);
+    }
+
+    @GetMapping("/getAllUserHabitDataWithDateCompleted/{userName}")
+    public Flux<UserHabitDataWithDate> getAllUserHabitDataWithDateCompleted(@PathVariable String userName) {
+        return dateDataService.getAllUserHabitDataWithDatePredicate(userName, true);
+    }
+
+    @GetMapping("/getAllUserHabitDataWithDateIncompleted/{userName}")
+    public Flux<UserHabitDataWithDate> getAllUserHabitDataWithDateIncompleted(@PathVariable String userName) {
+        return dateDataService.getAllUserHabitDataWithDatePredicate(userName, false);
+    }
+
     @PostMapping("/getCurrentHabitDoneDataOfUser")
     public Mono<HabitDoneData> getCurrentHabitDoneDataOfUser(@RequestBody HabitDoneDataRequest habitDoneData) {
         return dateDataService.getCurrentHabitDoneDataOfUser(habitDoneData.getUserName(),
-                habitDoneData.getHabitName(), LocalDate.parse(habitDoneData.getDate()));
+                habitDoneData.getHabitName(), LocalDate.now());
     }
 
     @PostMapping("/getLastHabitDoneDataOfUser")
@@ -38,7 +52,7 @@ public class DateDataController {
 
     @PostMapping("/saveDateData")
     public Mono<DateData> saveDateData(@RequestBody DateDataRequest dateData) {
-        return dateDataService.getDateData(LocalDate.parse(dateData.getDate())).flatMap(data -> {
+        return dateDataService.getDateData(LocalDate.now()).flatMap(data -> {
             List<UserHabitData> userHabitDataList = data.getUserHabitData().stream().toList();
             if (userHabitDataList.stream().noneMatch(userHabitData -> userHabitData.getUserName().equals(dateData.getUserName()))) {
                 return dateDataService.addUserHabitData(dateData);
@@ -51,13 +65,13 @@ public class DateDataController {
                 return dateDataService.addHabitDoneData(dateData);
             }
 
-            return dateDataService.addLieOnDone(dateData);
+            return dateDataService.addHabitDoneDataInfo(dateData);
         }).switchIfEmpty(Mono.defer(() -> dateDataService.saveDateData(dateData)));
     }
 
     @PostMapping("/getStreak")
     public Mono<Integer> getStreak(@RequestBody HabitDoneDataRequest habitDoneData) {
-        return calculateStreak(habitDoneData.getUserName(), habitDoneData.getHabitName(), LocalDate.parse(habitDoneData.getDate()), 0)
+        return calculateStreak(habitDoneData.getUserName(), habitDoneData.getHabitName(), LocalDate.now(), 0)
                 .defaultIfEmpty(0);
     }
 
@@ -75,9 +89,9 @@ public class DateDataController {
                 .defaultIfEmpty(streak);
     }
 
-    @PostMapping("/calculatePointsToRemoveFromAbsence")
-    public Mono<Integer> removePointsFromAbsence(@RequestBody HabitDoneDataRequest habitDoneData) {
-        return dateDataService.calculatePointsToRemoveFromAbsence(habitDoneData);
-    }
+//    @PostMapping("/calculatePointsToRemoveFromAbsence")
+//    public Mono<Integer> removePointsFromAbsence(@RequestBody HabitDoneDataRequest habitDoneData) {
+//        return dateDataService.calculatePointsToRemoveFromAbsence(habitDoneData);
+//    }
 
 }

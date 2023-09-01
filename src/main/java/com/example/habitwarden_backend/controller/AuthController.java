@@ -62,6 +62,7 @@ public class AuthController {
             if (exists) {
                 return Mono.error(new ResponseStatusException(HttpStatus.CONFLICT, "User already exists!"));
             } else {
+                System.out.println(user);
                 Mono<User> registeredUser = userService.saveNewUser(user);
                 return registeredUser.flatMap(u -> {
                     if (u.getName() == null) {

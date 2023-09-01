@@ -4,16 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class HabitDoneDataInfo {
+public class UserHabitDataWithDate {
 
-    LocalDateTime doneTime;
-    Boolean done;
-    Boolean lieOnDone;
-    Boolean wantedToQuit;
+    LocalDate date;
+    UserHabitData userHabitData;
 
 }

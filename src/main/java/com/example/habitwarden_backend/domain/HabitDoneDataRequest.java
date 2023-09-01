@@ -7,6 +7,5 @@ public class HabitDoneDataRequest {
 
     String userName;
     String habitName;
-    String date;
 
 }

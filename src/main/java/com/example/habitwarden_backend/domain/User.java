@@ -28,6 +28,7 @@ public class User implements UserDetails {
     Gender gender;
     List<Role> roles;
     String profession;
+    String codeword;
     Boolean isDarkGroup;
     Integer points;
 
@@ -52,6 +53,7 @@ public class User implements UserDetails {
                 gender,
                 Collections.singletonList(Role.USER),
                 registeredUser.getProfession(),
+                registeredUser.getCodeword(),
                 registeredUser.getIsDarkGroup(),
                 0
         );

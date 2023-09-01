@@ -42,6 +42,9 @@ public class SecurityConfig {
                 .authorizeExchange(auth -> {
                     auth.pathMatchers("/auth/register").permitAll();
                     auth.pathMatchers("/auth/login").permitAll();
+                    auth.pathMatchers("/user/*").permitAll();
+                    auth.pathMatchers("/habits/*").permitAll();
+                    auth.pathMatchers("/dateData/*").permitAll();
                     auth.anyExchange().authenticated();
                 })
                 .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
